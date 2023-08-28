@@ -145,6 +145,10 @@ pub fn check(initial: &str) -> Vec<Mistake> {
 
 pub fn display(mistake: Mistake, mut lines: Lines) {
     let mut line = lines.nth(mistake.line).unwrap().chars();
+    print!(
+        "\x1b[31mLine {}\x1b[0m (\x1b[33m{}-{}\x1b[0m): ",
+        mistake.line, mistake.start, mistake.end,
+    );
     println!(
         "{}\x1b[4:3m\x1b[58:2::240:143:104m{}\x1b[59m\x1b[4:0m{}",
         line.by_ref().take(mistake.start).collect::<String>(),
