@@ -1,8 +1,7 @@
 use std::str::Lines;
 
 fn main() {
-    // let value = "Hello,  world!\n HELLO    WOoorlLLDDD  HELL";
-    let value = "heloo    world";
+    let value = "Hello,  world!\n HELLO\",    WOoorlLLDDD  HELL";
     let errors = check(value);
     for error in errors {
         display(error, value.lines())
@@ -20,7 +19,23 @@ struct MultipleSpaces {
     was_last: bool,
 }
 
-impl MultipleSpaces {
+struct QuotePositioning {}
+
+impl ErrorVal for QuotePositioning {
+    fn check(&mut self, c: char, index: usize, last_char: char) -> Option<usize> {
+        if c == ',' && last_char == '"' {
+            Some(index)
+        } else {
+            None
+        }
+    }
+
+    fn new() -> Self {
+        QuotePositioning {}
+    }
+}
+
+impl ErrorVal for MultipleSpaces {
     fn check(&mut self, c: char, index: usize, last_char: char) -> Option<usize> {
         if self.was_last {
             if c != ' ' {
@@ -43,14 +58,19 @@ impl MultipleSpaces {
 }
 
 trait ErrorVal {
-    fn check(&mut self, c: char, index: usize, last_char: char) -> Option<Mistake>;
-    fn new() -> Self;
+    fn check(&mut self, c: char, index: usize, last_char: char) -> Option<usize>;
+    fn new() -> Self
+    where
+        Self: Sized;
 }
 
 fn check(initial: &str) -> Vec<Mistake> {
     let mut mistakes = Vec::new();
 
-    let mut catching = vec![MultipleSpaces::new()];
+    let mut catching: Vec<Box<dyn ErrorVal>> = vec![
+        Box::new(MultipleSpaces::new()),
+        Box::new(QuotePositioning::new()),
+    ];
 
     for (i, line) in initial.lines().enumerate() {
         let mut last_char = ' ';
@@ -60,7 +80,7 @@ fn check(initial: &str) -> Vec<Mistake> {
                     mistakes.push(Mistake {
                         line: i,
                         start,
-                        end: ind,
+                        end: ind + 1,
                     });
                 }
             }
@@ -78,7 +98,7 @@ fn display(mistake: Mistake, mut lines: Lines) {
             .take(mistake.start.saturating_sub(1))
             .collect::<String>(),
         line.by_ref()
-            .take(mistake.end - mistake.start + 1)
+            .take(mistake.end - mistake.start)
             .collect::<String>(),
         line.collect::<String>(),
     );
