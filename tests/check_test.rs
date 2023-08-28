@@ -1,5 +1,3 @@
-
-
 #[test]
 fn single_line_double_space() {
     assert_eq!(
@@ -49,6 +47,25 @@ fn single_line_space_ending_and_beginning() {
                 line: 0,
                 start: 6,
                 end: 6
+            },
+        ]
+    );
+}
+
+#[test]
+fn single_line_double_space_ending_and_beginning() {
+    assert_eq!(
+        textcheck::check("  oh no  "),
+        vec![
+            textcheck::Mistake {
+                line: 0,
+                start: 0,
+                end: 1
+            },
+            textcheck::Mistake {
+                line: 0,
+                start: 7,
+                end: 8
             },
         ]
     );

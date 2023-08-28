@@ -74,7 +74,7 @@ impl EachCharacter for MultipleSpaces {
         max_index: usize,
     ) -> Option<(usize, usize)> {
         if self.was_last {
-            if c != ' ' || max_index == index {
+            if !c.is_ascii_whitespace() || max_index == index {
                 let final_index = if max_index == index {
                     index
                 } else {
@@ -85,8 +85,12 @@ impl EachCharacter for MultipleSpaces {
             }
         } else if c == ' ' {
             if max_index == index {
-                return Some((index, index));
-            } else if last_char == ' ' {
+                if last_char.is_ascii_whitespace() {
+                    return Some((index.saturating_sub(1), index));
+                } else {
+                    return Some((index, index));
+                }
+            } else if last_char.is_ascii_whitespace() {
                 self.was_last = true;
                 self.initial = index;
             }
