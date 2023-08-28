@@ -29,7 +29,7 @@ impl EachCharacter for LowerCaseI {
             && c.is_ascii_whitespace()
         {
             self.char_before_last = last_char;
-            Some((index, index))
+            Some((index.saturating_sub(1), index.saturating_sub(1)))
         } else {
             self.char_before_last = last_char;
             None
@@ -74,12 +74,14 @@ impl EachCharacter for MultipleSpaces {
         max_index: usize,
     ) -> Option<(usize, usize)> {
         if self.was_last {
-            if c != ' ' {
+            if c != ' ' || max_index == index {
+                let final_index = if max_index == index {
+                    index
+                } else {
+                    index.saturating_sub(1)
+                };
                 self.was_last = false;
-                return Some((self.initial - 1, index - 1));
-            } else if max_index == index {
-                self.was_last = false;
-                return Some((self.initial - 1, index));
+                return Some((self.initial.saturating_sub(1), final_index));
             }
         } else if c == ' ' {
             if max_index == index {
@@ -147,7 +149,7 @@ pub fn display(mistake: Mistake, mut lines: Lines) {
         "{}\x1b[4:3m\x1b[58:2::240:143:104m{}\x1b[59m\x1b[4:0m{}",
         line.by_ref().take(mistake.start).collect::<String>(),
         line.by_ref()
-            .take(mistake.end - mistake.start + 1)
+            .take(mistake.end.wrapping_sub(mistake.start) + 1)
             .collect::<String>(),
         line.collect::<String>(),
     );
