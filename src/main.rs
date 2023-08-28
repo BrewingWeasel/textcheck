@@ -12,7 +12,6 @@ use clap::Parser;
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// Text to lint
-    #[arg(short, long)]
     file: Option<String>,
 }
 
