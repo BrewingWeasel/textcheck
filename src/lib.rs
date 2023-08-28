@@ -1,9 +1,10 @@
 use std::str::Lines;
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct Mistake {
-    line: usize,
-    start: usize,
-    end: usize,
+    pub line: usize,
+    pub start: usize,
+    pub end: usize,
 }
 
 struct MultipleSpaces {
@@ -22,13 +23,13 @@ impl EachCharacter for LowerCaseI {
         index: usize,
         last_char: char,
         _max_index: usize,
-    ) -> Option<usize> {
+    ) -> Option<(usize, usize)> {
         if last_char == 'i'
             && self.char_before_last.is_ascii_whitespace()
             && c.is_ascii_whitespace()
         {
             self.char_before_last = last_char;
-            Some(index)
+            Some((index, index))
         } else {
             self.char_before_last = last_char;
             None
@@ -51,9 +52,9 @@ impl EachCharacter for QuotePositioning {
         index: usize,
         last_char: char,
         _max_index: usize,
-    ) -> Option<usize> {
+    ) -> Option<(usize, usize)> {
         if [',', '.', '!'].contains(&c) && last_char == '"' {
-            Some(index)
+            Some((index.saturating_sub(1), index))
         } else {
             None
         }
@@ -65,15 +66,24 @@ impl EachCharacter for QuotePositioning {
 }
 
 impl EachCharacter for MultipleSpaces {
-    fn check(&mut self, c: char, index: usize, last_char: char, max_index: usize) -> Option<usize> {
+    fn check(
+        &mut self,
+        c: char,
+        index: usize,
+        last_char: char,
+        max_index: usize,
+    ) -> Option<(usize, usize)> {
         if self.was_last {
-            if c != ' ' || max_index == index {
+            if c != ' ' {
                 self.was_last = false;
-                return Some(self.initial);
+                return Some((self.initial - 1, index - 1));
+            } else if max_index == index {
+                self.was_last = false;
+                return Some((self.initial - 1, index));
             }
         } else if c == ' ' {
             if max_index == index {
-                return Some(index);
+                return Some((index, index));
             } else if last_char == ' ' {
                 self.was_last = true;
                 self.initial = index;
@@ -91,7 +101,13 @@ impl EachCharacter for MultipleSpaces {
 }
 
 trait EachCharacter {
-    fn check(&mut self, c: char, index: usize, last_char: char, max_index: usize) -> Option<usize>;
+    fn check(
+        &mut self,
+        c: char,
+        index: usize,
+        last_char: char,
+        max_index: usize,
+    ) -> Option<(usize, usize)>;
     fn new() -> Self
     where
         Self: Sized;
@@ -111,11 +127,11 @@ pub fn check(initial: &str) -> Vec<Mistake> {
         let line_length = line.len().saturating_sub(1);
         for (ind, char) in line.char_indices() {
             for catch in &mut all_chars {
-                if let Some(start) = catch.check(char, ind, last_char, line_length) {
+                if let Some((start, end)) = catch.check(char, ind, last_char, line_length) {
                     mistakes.push(Mistake {
                         line: i,
                         start,
-                        end: ind + 1,
+                        end,
                     });
                 }
             }
@@ -129,11 +145,9 @@ pub fn display(mistake: Mistake, mut lines: Lines) {
     let mut line = lines.nth(mistake.line).unwrap().chars();
     println!(
         "{}\x1b[4:3m\x1b[58:2::240:143:104m{}\x1b[59m\x1b[4:0m{}",
+        line.by_ref().take(mistake.start).collect::<String>(),
         line.by_ref()
-            .take(mistake.start.saturating_sub(1))
-            .collect::<String>(),
-        line.by_ref()
-            .take(mistake.end - mistake.start)
+            .take(mistake.end - mistake.start + 1)
             .collect::<String>(),
         line.collect::<String>(),
     );
