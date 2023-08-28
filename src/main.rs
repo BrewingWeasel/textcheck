@@ -1,7 +1,7 @@
 use std::str::Lines;
 
 fn main() {
-    let value = "Hello,  world!\n HELLO\",    WOoorlLLDDD  HELL";
+    let value = "Hello,  world!\n HELLO\",    WOoorlLLDDD  HELL ";
     let errors = check(value);
     for error in errors {
         display(error, value.lines())
@@ -21,8 +21,14 @@ struct MultipleSpaces {
 
 struct QuotePositioning {}
 
-impl ErrorVal for QuotePositioning {
-    fn check(&mut self, c: char, index: usize, last_char: char) -> Option<usize> {
+impl EachCharacter for QuotePositioning {
+    fn check(
+        &mut self,
+        c: char,
+        index: usize,
+        last_char: char,
+        _max_index: usize,
+    ) -> Option<usize> {
         if [',', '.', '!'].contains(&c) && last_char == '"' {
             Some(index)
         } else {
@@ -35,16 +41,20 @@ impl ErrorVal for QuotePositioning {
     }
 }
 
-impl ErrorVal for MultipleSpaces {
-    fn check(&mut self, c: char, index: usize, last_char: char) -> Option<usize> {
+impl EachCharacter for MultipleSpaces {
+    fn check(&mut self, c: char, index: usize, last_char: char, max_index: usize) -> Option<usize> {
         if self.was_last {
-            if c != ' ' {
+            if c != ' ' || max_index == index {
                 self.was_last = false;
                 return Some(self.initial);
             }
-        } else if c == ' ' && last_char == ' ' {
-            self.was_last = true;
-            self.initial = index;
+        } else if c == ' ' {
+            if max_index == index {
+                return Some(index);
+            } else if last_char == ' ' {
+                self.was_last = true;
+                self.initial = index;
+            }
         }
         None
     }
@@ -57,8 +67,8 @@ impl ErrorVal for MultipleSpaces {
     }
 }
 
-trait ErrorVal {
-    fn check(&mut self, c: char, index: usize, last_char: char) -> Option<usize>;
+trait EachCharacter {
+    fn check(&mut self, c: char, index: usize, last_char: char, max_index: usize) -> Option<usize>;
     fn new() -> Self
     where
         Self: Sized;
@@ -67,16 +77,17 @@ trait ErrorVal {
 fn check(initial: &str) -> Vec<Mistake> {
     let mut mistakes = Vec::new();
 
-    let mut catching: Vec<Box<dyn ErrorVal>> = vec![
+    let mut all_chars: Vec<Box<dyn EachCharacter>> = vec![
         Box::new(MultipleSpaces::new()),
         Box::new(QuotePositioning::new()),
     ];
 
     for (i, line) in initial.lines().enumerate() {
         let mut last_char = ' ';
+        let line_length = line.len() - 1;
         for (ind, char) in line.char_indices() {
-            for catch in &mut catching {
-                if let Some(start) = catch.check(char, ind, last_char) {
+            for catch in &mut all_chars {
+                if let Some(start) = catch.check(char, ind, last_char, line_length) {
                     mistakes.push(Mistake {
                         line: i,
                         start,
