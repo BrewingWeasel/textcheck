@@ -23,7 +23,7 @@ struct QuotePositioning {}
 
 impl ErrorVal for QuotePositioning {
     fn check(&mut self, c: char, index: usize, last_char: char) -> Option<usize> {
-        if c == ',' && last_char == '"' {
+        if [',', '.', '!'].contains(&c) && last_char == '"' {
             Some(index)
         } else {
             None
