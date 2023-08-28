@@ -108,7 +108,7 @@ pub fn check(initial: &str) -> Vec<Mistake> {
 
     for (i, line) in initial.lines().enumerate() {
         let mut last_char = ' ';
-        let line_length = line.len() - 1;
+        let line_length = line.len().saturating_sub(1);
         for (ind, char) in line.char_indices() {
             for catch in &mut all_chars {
                 if let Some(start) = catch.check(char, ind, last_char, line_length) {
