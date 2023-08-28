@@ -11,6 +11,37 @@ struct MultipleSpaces {
     was_last: bool,
 }
 
+struct LowerCaseI {
+    char_before_last: char,
+}
+
+impl EachCharacter for LowerCaseI {
+    fn check(
+        &mut self,
+        c: char,
+        index: usize,
+        last_char: char,
+        _max_index: usize,
+    ) -> Option<usize> {
+        if last_char == 'i'
+            && self.char_before_last.is_ascii_whitespace()
+            && c.is_ascii_whitespace()
+        {
+            self.char_before_last = last_char;
+            Some(index)
+        } else {
+            self.char_before_last = last_char;
+            None
+        }
+    }
+
+    fn new() -> Self {
+        LowerCaseI {
+            char_before_last: ' ',
+        }
+    }
+}
+
 struct QuotePositioning {}
 
 impl EachCharacter for QuotePositioning {
@@ -72,6 +103,7 @@ pub fn check(initial: &str) -> Vec<Mistake> {
     let mut all_chars: Vec<Box<dyn EachCharacter>> = vec![
         Box::new(MultipleSpaces::new()),
         Box::new(QuotePositioning::new()),
+        Box::new(LowerCaseI::new()),
     ];
 
     for (i, line) in initial.lines().enumerate() {
