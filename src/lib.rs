@@ -21,6 +21,12 @@ struct MDash {
     initial: usize,
 }
 
+struct QuotePositioning {}
+
+struct CapitalizeAfterSentence {
+    was_punc_before_whitespace: bool,
+}
+
 impl EachCharacter for LowerCaseI {
     fn check(
         &mut self,
@@ -64,6 +70,7 @@ impl EachCharacter for MDash {
                 self.was_space_before_hyphen = false;
             }
         }
+
         if c == '-' && last_char.is_ascii_whitespace() {
             if index == max_index {
                 return Some((index, index));
@@ -82,7 +89,34 @@ impl EachCharacter for MDash {
     }
 }
 
-struct QuotePositioning {}
+impl EachCharacter for CapitalizeAfterSentence {
+    fn check(
+        &mut self,
+        c: char,
+        index: usize,
+        last_char: char,
+        _max_index: usize,
+    ) -> Option<(usize, usize)> {
+        if self.was_punc_before_whitespace {
+            if c.is_ascii_lowercase() {
+                self.was_punc_before_whitespace = false;
+                return Some((index, index));
+            } else if c.is_ascii_uppercase() {
+                self.was_punc_before_whitespace = false;
+            }
+        }
+        if c.is_ascii_whitespace() && ['.', '!', '?'].contains(&last_char) {
+            self.was_punc_before_whitespace = true;
+        }
+        return None;
+    }
+
+    fn new() -> Self {
+        CapitalizeAfterSentence {
+            was_punc_before_whitespace: false,
+        }
+    }
+}
 
 impl EachCharacter for QuotePositioning {
     fn check(
@@ -166,6 +200,7 @@ pub fn check(initial: &str) -> Vec<Mistake> {
         Box::new(QuotePositioning::new()),
         Box::new(LowerCaseI::new()),
         Box::new(MDash::new()),
+        Box::new(CapitalizeAfterSentence::new()),
     ];
 
     for (i, line) in initial.lines().enumerate() {
