@@ -446,3 +446,70 @@ fn i_then_apostrophe_2() {
 fn i_then_apostrophe_no_space_before() {
     assert_eq!(textcheck::check("randomi's"), Vec::new());
 }
+
+#[test]
+fn capitalize_weekday() {
+    assert_eq!(
+        textcheck::check("Today is friday."),
+        vec![textcheck::Mistake {
+            line: 0,
+            start: 9,
+            end: 14,
+        },]
+    );
+}
+
+#[test]
+fn capitalize_weekday_after_double_space() {
+    assert_eq!(
+        textcheck::check("Today is  friday."),
+        vec![
+            textcheck::Mistake {
+                line: 0,
+                start: 8,
+                end: 9,
+            },
+            textcheck::Mistake {
+                line: 0,
+                start: 10,
+                end: 15,
+            },
+        ]
+    );
+}
+
+#[test]
+fn capitalize_weekday_before_space() {
+    assert_eq!(
+        textcheck::check("Today is  friday I think."),
+        vec![
+            textcheck::Mistake {
+                line: 0,
+                start: 8,
+                end: 9,
+            },
+            textcheck::Mistake {
+                line: 0,
+                start: 10,
+                end: 15,
+            },
+        ]
+    );
+}
+
+#[test]
+fn capitalize_weekday_after_new_line_one_sentence() {
+    assert_eq!(
+        textcheck::check("Today is\nfriday I think."),
+        vec![textcheck::Mistake {
+            line: 1,
+            start: 0,
+            end: 5,
+        },]
+    );
+}
+
+#[test]
+fn already_capitalized() {
+    assert_eq!(textcheck::check("Monday is the day today."), Vec::new());
+}
