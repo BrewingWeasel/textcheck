@@ -16,6 +16,11 @@ struct LowerCaseI {
     char_before_last: char,
 }
 
+struct MDash {
+    was_space_before_hyphen: bool,
+    initial: usize,
+}
+
 impl EachCharacter for LowerCaseI {
     fn check(
         &mut self,
@@ -39,6 +44,37 @@ impl EachCharacter for LowerCaseI {
     fn new() -> Self {
         LowerCaseI {
             char_before_last: ' ',
+        }
+    }
+}
+
+impl EachCharacter for MDash {
+    fn check(
+        &mut self,
+        c: char,
+        index: usize,
+        last_char: char,
+        _max_index: usize,
+    ) -> Option<(usize, usize)> {
+        if self.was_space_before_hyphen {
+            if c.is_ascii_whitespace() {
+                self.was_space_before_hyphen = false;
+                return Some((self.initial, index - 1));
+            } else if c != '-' {
+                self.was_space_before_hyphen = false;
+            }
+        }
+        if c == '-' && last_char.is_ascii_whitespace() {
+            self.initial = index;
+            self.was_space_before_hyphen = true;
+        }
+        return None;
+    }
+
+    fn new() -> Self {
+        MDash {
+            was_space_before_hyphen: false,
+            initial: 0,
         }
     }
 }
@@ -126,6 +162,7 @@ pub fn check(initial: &str) -> Vec<Mistake> {
         Box::new(MultipleSpaces::new()),
         Box::new(QuotePositioning::new()),
         Box::new(LowerCaseI::new()),
+        Box::new(MDash::new()),
     ];
 
     for (i, line) in initial.lines().enumerate() {
