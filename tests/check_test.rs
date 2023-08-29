@@ -6,6 +6,7 @@ fn single_line_double_space() {
             line: 0,
             start: 2,
             end: 3,
+            name: "Multiple spaces used instead of one"
         }]
     );
 }
@@ -17,7 +18,8 @@ fn single_line_triple_space() {
         vec![textcheck::Mistake {
             line: 0,
             start: 2,
-            end: 4
+            end: 4,
+            name: "Multiple spaces used instead of one",
         }]
     );
 }
@@ -28,7 +30,8 @@ fn single_line_triple_space_ending() {
         vec![textcheck::Mistake {
             line: 0,
             start: 5,
-            end: 7
+            end: 7,
+            name: "Extra whitespace at end of line",
         }]
     );
 }
@@ -41,12 +44,14 @@ fn single_line_space_ending_and_beginning() {
             textcheck::Mistake {
                 line: 0,
                 start: 0,
-                end: 0
+                end: 0,
+                name: "Multiple spaces used instead of one",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 6,
-                end: 6
+                end: 6,
+                name: "Extra whitespace at end of line",
             },
         ]
     );
@@ -60,12 +65,14 @@ fn single_line_double_space_ending_and_beginning() {
             textcheck::Mistake {
                 line: 0,
                 start: 0,
-                end: 1
+                end: 1,
+                name: "Multiple spaces used instead of one",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 7,
-                end: 8
+                end: 8,
+                name: "Extra whitespace at end of line",
             },
         ]
     );
@@ -79,12 +86,14 @@ fn space_ending_and_beginning_and_two_blank_lines() {
             textcheck::Mistake {
                 line: 0,
                 start: 0,
-                end: 0
+                end: 0,
+                name: "Multiple spaces used instead of one",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 6,
-                end: 6
+                end: 6,
+                name: "Extra whitespace at end of line",
             },
         ]
     );
@@ -97,7 +106,8 @@ fn space_before_blank_line() {
         vec![textcheck::Mistake {
             line: 0,
             start: 0,
-            end: 0
+            end: 0,
+            name: "Extra whitespace at end of line",
         },]
     );
 }
@@ -110,22 +120,26 @@ fn space_before_blank_lines() {
             textcheck::Mistake {
                 line: 0,
                 start: 0,
-                end: 0
+                end: 0,
+                name: "Extra whitespace at end of line",
             },
             textcheck::Mistake {
                 line: 1,
                 start: 0,
-                end: 0
+                end: 0,
+                name: "Extra whitespace at end of line",
             },
             textcheck::Mistake {
                 line: 2,
                 start: 0,
-                end: 0
+                end: 0,
+                name: "Extra whitespace at end of line",
             },
             textcheck::Mistake {
                 line: 3,
                 start: 0,
-                end: 0
+                end: 0,
+                name: "Extra whitespace at end of line",
             },
         ]
     );
@@ -139,12 +153,14 @@ fn space_before_misplaced_quote() {
             textcheck::Mistake {
                 line: 0,
                 start: 0,
-                end: 0
+                end: 0,
+                name: "Multiple spaces used instead of one",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 1,
-                end: 2
+                end: 2,
+                name: "The comma should go before the quotation mark",
             },
         ]
     );
@@ -158,12 +174,14 @@ fn two_misplaced_quotes() {
             textcheck::Mistake {
                 line: 0,
                 start: 0,
-                end: 1
+                end: 1,
+                name: "The comma should go before the quotation mark",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 2,
-                end: 3
+                end: 3,
+                name: "The comma should go before the quotation mark",
             },
         ]
     );
@@ -176,7 +194,8 @@ fn lowercase_i() {
         vec![textcheck::Mistake {
             line: 0,
             start: 0,
-            end: 0
+            end: 0,
+            name: "'i' should be uppercase",
         },]
     );
 }
@@ -189,12 +208,14 @@ fn lowercase_i_then_two_spaces() {
             textcheck::Mistake {
                 line: 0,
                 start: 0,
-                end: 0
+                end: 0,
+                name: "'i' should be uppercase",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 1,
-                end: 2
+                end: 2,
+                name: "Multiple spaces used instead of one",
             },
         ]
     );
@@ -226,7 +247,8 @@ fn hypen() {
         vec![textcheck::Mistake {
             line: 0,
             start: 12,
-            end: 12
+            end: 12,
+            name: "Should be em dash (—) instead of hyphen (-)",
         },]
     );
 }
@@ -238,7 +260,8 @@ fn twohypens() {
         vec![textcheck::Mistake {
             line: 0,
             start: 12,
-            end: 13
+            end: 13,
+            name: "Should be em dash (—) instead of hyphen (-)",
         },]
     );
 }
@@ -251,17 +274,20 @@ fn doublespace_on_both_sides_of_triple_hyphen() {
             textcheck::Mistake {
                 line: 0,
                 start: 11,
-                end: 12
+                end: 12,
+                name: "Multiple spaces used instead of one",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 13,
-                end: 15
+                end: 15,
+                name: "Should be em dash (—) instead of hyphen (-)",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 16,
-                end: 17
+                end: 17,
+                name: "Multiple spaces used instead of one",
             },
         ]
     );
@@ -280,12 +306,14 @@ fn hypen_then_lowercase_i() {
             textcheck::Mistake {
                 line: 0,
                 start: 12,
-                end: 12
+                end: 12,
+                name: "Should be em dash (—) instead of hyphen (-)",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 14,
-                end: 14
+                end: 14,
+                name: "'i' should be uppercase",
             },
         ]
     );
@@ -299,17 +327,20 @@ fn hypen_then_doublespace_lowercase_i() {
             textcheck::Mistake {
                 line: 0,
                 start: 12,
-                end: 12
+                end: 12,
+                name: "Should be em dash (—) instead of hyphen (-)",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 13,
-                end: 14
+                end: 14,
+                name: "Multiple spaces used instead of one",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 15,
-                end: 15
+                end: 15,
+                name: "'i' should be uppercase",
             },
         ]
     );
@@ -322,7 +353,8 @@ fn hypen_end_of_line() {
         vec![textcheck::Mistake {
             line: 0,
             start: 12,
-            end: 12
+            end: 12,
+            name: "Should be em dash (—) instead of hyphen (-)",
         },]
     );
 }
@@ -335,6 +367,7 @@ fn capitalize_first_letter() {
             line: 0,
             start: 4,
             end: 4,
+            name: "The first letter after a sentence should be capitalized",
         },]
     );
 }
@@ -348,11 +381,13 @@ fn capitalize_first_letter_after_three_spaces() {
                 line: 0,
                 start: 3,
                 end: 5,
+                name: "Multiple spaces used instead of one",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 6,
                 end: 6,
+                name: "The first letter after a sentence should be capitalized",
             },
         ]
     );
@@ -367,11 +402,13 @@ fn capitalize_first_letter_twice() {
                 line: 0,
                 start: 4,
                 end: 4,
+                name: "The first letter after a sentence should be capitalized",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 17,
                 end: 17,
+                name: "The first letter after a sentence should be capitalized",
             },
         ]
     );
@@ -395,6 +432,7 @@ fn capitalize_first_letter_new_line() {
             line: 1,
             start: 0,
             end: 0,
+            name: "The first letter after a sentence should be capitalized",
         },]
     );
 }
@@ -408,11 +446,13 @@ fn capitalize_first_letter_new_line_after_space() {
                 line: 0,
                 start: 12,
                 end: 12,
+                name: "Extra whitespace at end of line",
             },
             textcheck::Mistake {
                 line: 1,
                 start: 0,
                 end: 0,
+                name: "The first letter after a sentence should be capitalized",
             },
         ]
     );
@@ -426,6 +466,7 @@ fn i_then_apostrophe() {
             line: 0,
             start: 0,
             end: 0,
+            name: "'i' should be uppercase",
         },]
     );
 }
@@ -438,6 +479,7 @@ fn i_then_apostrophe_2() {
             line: 0,
             start: 13,
             end: 13,
+            name: "'i' should be uppercase",
         },]
     );
 }
@@ -455,6 +497,7 @@ fn capitalize_weekday() {
             line: 0,
             start: 9,
             end: 14,
+            name: "Days of the week and months should be capitalized",
         },]
     );
 }
@@ -468,11 +511,13 @@ fn capitalize_weekday_after_double_space() {
                 line: 0,
                 start: 8,
                 end: 9,
+                name: "Multiple spaces used instead of one",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 10,
                 end: 15,
+                name: "Days of the week and months should be capitalized",
             },
         ]
     );
@@ -487,11 +532,13 @@ fn capitalize_weekday_before_space() {
                 line: 0,
                 start: 8,
                 end: 9,
+                name: "Multiple spaces used instead of one",
             },
             textcheck::Mistake {
                 line: 0,
                 start: 10,
                 end: 15,
+                name: "Days of the week and months should be capitalized",
             },
         ]
     );
@@ -505,6 +552,7 @@ fn capitalize_weekday_after_new_line_one_sentence() {
             line: 1,
             start: 0,
             end: 5,
+            name: "Days of the week and months should be capitalized",
         },]
     );
 }

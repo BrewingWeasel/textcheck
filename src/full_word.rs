@@ -28,18 +28,22 @@ pub struct WordCapitalization {
 }
 
 impl EachCharacter for WordCapitalization {
-    fn check(
+    fn check<'a>(
         &mut self,
         c: char,
         index: usize,
         _last_char: char,
         max_index: usize,
-    ) -> Option<(usize, usize)> {
+    ) -> Option<(usize, usize, &'a str)> {
         if c.is_ascii_whitespace() || max_index == index || c.is_ascii_punctuation() {
             if WORDS_TO_CAPITALIZE.contains(&self.word.as_str()) {
                 let start = index - self.word.len();
                 self.word = String::new();
-                return Some((start, index - 1));
+                return Some((
+                    start,
+                    index - 1,
+                    "Days of the week and months should be capitalized",
+                ));
             }
             self.word = String::new();
         } else {

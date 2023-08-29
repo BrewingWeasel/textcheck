@@ -2,10 +2,11 @@ use std::str::Lines;
 mod full_word;
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct Mistake {
+pub struct Mistake<'a> {
     pub line: usize,
     pub start: usize,
     pub end: usize,
+    pub name: &'a str,
 }
 
 struct MultipleSpaces {
@@ -29,19 +30,23 @@ struct CapitalizeAfterSentence {
 }
 
 impl EachCharacter for LowerCaseI {
-    fn check(
+    fn check<'a>(
         &mut self,
         c: char,
         index: usize,
         last_char: char,
         _max_index: usize,
-    ) -> Option<(usize, usize)> {
+    ) -> Option<(usize, usize, &'a str)> {
         if last_char == 'i'
             && self.char_before_last.is_ascii_whitespace()
             && (c.is_ascii_whitespace() || c == '\'')
         {
             self.char_before_last = last_char;
-            Some((index.saturating_sub(1), index.saturating_sub(1)))
+            Some((
+                index.saturating_sub(1),
+                index.saturating_sub(1),
+                "'i' should be uppercase",
+            ))
         } else {
             self.char_before_last = last_char;
             None
@@ -56,17 +61,21 @@ impl EachCharacter for LowerCaseI {
 }
 
 impl EachCharacter for MDash {
-    fn check(
+    fn check<'a>(
         &mut self,
         c: char,
         index: usize,
         last_char: char,
         max_index: usize,
-    ) -> Option<(usize, usize)> {
+    ) -> Option<(usize, usize, &'a str)> {
         if self.was_space_before_hyphen {
             if c.is_ascii_whitespace() {
                 self.was_space_before_hyphen = false;
-                return Some((self.initial, index - 1));
+                return Some((
+                    self.initial,
+                    index - 1,
+                    "Should be em dash (—) instead of hyphen (-)",
+                ));
             } else if c != '-' {
                 self.was_space_before_hyphen = false;
             }
@@ -74,7 +83,7 @@ impl EachCharacter for MDash {
 
         if c == '-' && last_char.is_ascii_whitespace() {
             if index == max_index {
-                return Some((index, index));
+                return Some((index, index, "Should be em dash (—) instead of hyphen (-)"));
             }
             self.initial = index;
             self.was_space_before_hyphen = true;
@@ -91,17 +100,21 @@ impl EachCharacter for MDash {
 }
 
 impl EachCharacter for CapitalizeAfterSentence {
-    fn check(
+    fn check<'a>(
         &mut self,
         c: char,
         index: usize,
         last_char: char,
         max_index: usize,
-    ) -> Option<(usize, usize)> {
+    ) -> Option<(usize, usize, &'a str)> {
         if self.was_punc_before_whitespace {
             if c.is_ascii_lowercase() {
                 self.was_punc_before_whitespace = false;
-                return Some((index, index));
+                return Some((
+                    index,
+                    index,
+                    "The first letter after a sentence should be capitalized",
+                ));
             } else if c.is_ascii_uppercase() {
                 self.was_punc_before_whitespace = false;
             }
@@ -122,15 +135,19 @@ impl EachCharacter for CapitalizeAfterSentence {
 }
 
 impl EachCharacter for QuotePositioning {
-    fn check(
+    fn check<'a>(
         &mut self,
         c: char,
         index: usize,
         last_char: char,
         _max_index: usize,
-    ) -> Option<(usize, usize)> {
+    ) -> Option<(usize, usize, &'a str)> {
         if [',', '.', '!'].contains(&c) && last_char == '"' {
-            Some((index.saturating_sub(1), index))
+            Some((
+                index.saturating_sub(1),
+                index,
+                "The comma should go before the quotation mark",
+            ))
         } else {
             None
         }
@@ -142,29 +159,40 @@ impl EachCharacter for QuotePositioning {
 }
 
 impl EachCharacter for MultipleSpaces {
-    fn check(
+    fn check<'a>(
         &mut self,
         c: char,
         index: usize,
         last_char: char,
         max_index: usize,
-    ) -> Option<(usize, usize)> {
+    ) -> Option<(usize, usize, &'a str)> {
         if self.was_last {
-            if !c.is_ascii_whitespace() || max_index == index {
-                let final_index = if max_index == index {
-                    index
-                } else {
-                    index.saturating_sub(1)
-                };
+            if !c.is_ascii_whitespace() {
                 self.was_last = false;
-                return Some((self.initial.saturating_sub(1), final_index));
+                return Some((
+                    self.initial.saturating_sub(1),
+                    index.saturating_sub(1),
+                    "Multiple spaces used instead of one",
+                ));
             }
-        } else if c == ' ' {
+            if max_index == index {
+                self.was_last = false;
+                return Some((
+                    self.initial.saturating_sub(1),
+                    index,
+                    "Extra whitespace at end of line",
+                ));
+            }
+        } else if c.is_ascii_whitespace() {
             if max_index == index {
                 if last_char.is_ascii_whitespace() {
-                    return Some((index.saturating_sub(1), index));
+                    return Some((
+                        index.saturating_sub(1),
+                        index,
+                        "Extra whitespace at end of line",
+                    ));
                 } else {
-                    return Some((index, index));
+                    return Some((index, index, "Extra whitespace at end of line"));
                 }
             } else if last_char.is_ascii_whitespace() {
                 self.was_last = true;
@@ -183,13 +211,13 @@ impl EachCharacter for MultipleSpaces {
 }
 
 trait EachCharacter {
-    fn check(
+    fn check<'a>(
         &mut self,
         c: char,
         index: usize,
         last_char: char,
         max_index: usize,
-    ) -> Option<(usize, usize)>;
+    ) -> Option<(usize, usize, &'a str)>;
     fn new() -> Self
     where
         Self: Sized;
@@ -212,11 +240,12 @@ pub fn check(initial: &str) -> Vec<Mistake> {
         let line_length = line.len().saturating_sub(1);
         for (ind, char) in line.char_indices() {
             for catch in &mut all_chars {
-                if let Some((start, end)) = catch.check(char, ind, last_char, line_length) {
+                if let Some((start, end, name)) = catch.check(char, ind, last_char, line_length) {
                     mistakes.push(Mistake {
                         line: i,
                         start,
                         end,
+                        name,
                     });
                 }
             }
@@ -229,8 +258,8 @@ pub fn check(initial: &str) -> Vec<Mistake> {
 pub fn display(mistake: Mistake, mut lines: Lines) {
     let mut line = lines.nth(mistake.line).unwrap().chars();
     print!(
-        "\x1b[31mLine {}\x1b[0m (\x1b[33m{}-{}\x1b[0m): ",
-        mistake.line, mistake.start, mistake.end,
+        "\x1b[31mLine {}\x1b[0m (\x1b[33m{}-{}\x1b[0m) {}: ",
+        mistake.line, mistake.start, mistake.end, mistake.name
     );
     println!(
         "{}\x1b[4:3m\x1b[58:2::240:143:104m{}\x1b[59m\x1b[4:0m{}",
