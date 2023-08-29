@@ -1,4 +1,5 @@
 use std::str::Lines;
+mod full_word;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Mistake {
@@ -25,48 +26,6 @@ struct QuotePositioning {}
 
 struct CapitalizeAfterSentence {
     was_punc_before_whitespace: bool,
-}
-
-struct WordCapitalization {
-    word: String,
-}
-
-impl EachCharacter for WordCapitalization {
-    fn check(
-        &mut self,
-        c: char,
-        index: usize,
-        _last_char: char,
-        max_index: usize,
-    ) -> Option<(usize, usize)> {
-        if c.is_ascii_whitespace() || max_index == index || c.is_ascii_punctuation() {
-            if [
-                "monday",
-                "tuesday",
-                "wednesday",
-                "thursday",
-                "friday",
-                "saturday",
-                "sunday",
-            ]
-            .contains(&self.word.as_str())
-            {
-                let start = index - self.word.len();
-                self.word = String::new();
-                return Some((start, index - 1));
-            }
-            self.word = String::new();
-        } else {
-            self.word.push(c)
-        }
-        return None;
-    }
-
-    fn new() -> Self {
-        WordCapitalization {
-            word: String::new(),
-        }
-    }
 }
 
 impl EachCharacter for LowerCaseI {
@@ -245,7 +204,7 @@ pub fn check(initial: &str) -> Vec<Mistake> {
         Box::new(LowerCaseI::new()),
         Box::new(MDash::new()),
         Box::new(CapitalizeAfterSentence::new()),
-        Box::new(WordCapitalization::new()),
+        Box::new(full_word::WordCapitalization::new()),
     ];
 
     for (i, line) in initial.lines().enumerate() {
