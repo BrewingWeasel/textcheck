@@ -417,3 +417,32 @@ fn capitalize_first_letter_new_line_after_space() {
         ]
     );
 }
+
+#[test]
+fn i_then_apostrophe() {
+    assert_eq!(
+        textcheck::check("i'd do that."),
+        vec![textcheck::Mistake {
+            line: 0,
+            start: 0,
+            end: 0,
+        },]
+    );
+}
+
+#[test]
+fn i_then_apostrophe_2() {
+    assert_eq!(
+        textcheck::check("That's true, i'd agree."),
+        vec![textcheck::Mistake {
+            line: 0,
+            start: 13,
+            end: 13,
+        },]
+    );
+}
+
+#[test]
+fn i_then_apostrophe_no_space_before() {
+    assert_eq!(textcheck::check("randomi's"), Vec::new());
+}
