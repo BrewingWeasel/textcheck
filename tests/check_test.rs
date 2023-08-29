@@ -326,3 +326,94 @@ fn hypen_end_of_line() {
         },]
     );
 }
+
+#[test]
+fn capitalize_first_letter() {
+    assert_eq!(
+        textcheck::check("Hi! how are you?"),
+        vec![textcheck::Mistake {
+            line: 0,
+            start: 4,
+            end: 4,
+        },]
+    );
+}
+
+#[test]
+fn capitalize_first_letter_after_three_spaces() {
+    assert_eq!(
+        textcheck::check("Hi!   how are you?"),
+        vec![
+            textcheck::Mistake {
+                line: 0,
+                start: 3,
+                end: 5,
+            },
+            textcheck::Mistake {
+                line: 0,
+                start: 6,
+                end: 6,
+            },
+        ]
+    );
+}
+
+#[test]
+fn capitalize_first_letter_twice() {
+    assert_eq!(
+        textcheck::check("Hi! how are you? great"),
+        vec![
+            textcheck::Mistake {
+                line: 0,
+                start: 4,
+                end: 4,
+            },
+            textcheck::Mistake {
+                line: 0,
+                start: 17,
+                end: 17,
+            },
+        ]
+    );
+}
+
+#[test]
+fn no_capitalized_needed() {
+    assert_eq!(textcheck::check("Hi."), Vec::new(),);
+}
+
+#[test]
+fn no_capitalized_needed_two_sents() {
+    assert_eq!(textcheck::check("Hi. That's true."), Vec::new(),);
+}
+
+#[test]
+fn capitalize_first_letter_new_line() {
+    assert_eq!(
+        textcheck::check("How are you?\nbad"),
+        vec![textcheck::Mistake {
+            line: 1,
+            start: 0,
+            end: 0,
+        },]
+    );
+}
+
+#[test]
+fn capitalize_first_letter_new_line_after_space() {
+    assert_eq!(
+        textcheck::check("How are you? \nbad"),
+        vec![
+            textcheck::Mistake {
+                line: 0,
+                start: 12,
+                end: 12,
+            },
+            textcheck::Mistake {
+                line: 1,
+                start: 0,
+                end: 0,
+            },
+        ]
+    );
+}
