@@ -1,6 +1,7 @@
 use crate::EachCharacter;
 
-const WORDS_TO_CAPITALIZE: [&str; 7] = [
+// TODO: more things, countries, languages etc
+const WORDS_TO_CAPITALIZE: [&str; 19] = [
     "monday",
     "tuesday",
     "wednesday",
@@ -8,6 +9,18 @@ const WORDS_TO_CAPITALIZE: [&str; 7] = [
     "friday",
     "saturday",
     "sunday",
+    "january",
+    "february",
+    "march",
+    "april",
+    "may",
+    "june",
+    "july",
+    "august",
+    "september",
+    "october",
+    "november",
+    "december",
 ];
 
 pub struct WordCapitalization {
