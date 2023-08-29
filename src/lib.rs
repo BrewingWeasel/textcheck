@@ -95,7 +95,7 @@ impl EachCharacter for CapitalizeAfterSentence {
         c: char,
         index: usize,
         last_char: char,
-        _max_index: usize,
+        max_index: usize,
     ) -> Option<(usize, usize)> {
         if self.was_punc_before_whitespace {
             if c.is_ascii_lowercase() {
@@ -105,7 +105,9 @@ impl EachCharacter for CapitalizeAfterSentence {
                 self.was_punc_before_whitespace = false;
             }
         }
-        if c.is_ascii_whitespace() && ['.', '!', '?'].contains(&last_char) {
+        if c.is_ascii_whitespace() && ['.', '!', '?'].contains(&last_char)
+            || (max_index == index) && ['.', '!', '?'].contains(&c)
+        {
             self.was_punc_before_whitespace = true;
         }
         return None;
