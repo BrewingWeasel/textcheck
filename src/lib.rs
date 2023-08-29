@@ -37,7 +37,7 @@ impl EachCharacter for LowerCaseI {
     ) -> Option<(usize, usize)> {
         if last_char == 'i'
             && self.char_before_last.is_ascii_whitespace()
-            && c.is_ascii_whitespace()
+            && (c.is_ascii_whitespace() || c == '\'')
         {
             self.char_before_last = last_char;
             Some((index.saturating_sub(1), index.saturating_sub(1)))
