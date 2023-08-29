@@ -78,7 +78,7 @@ impl EachCharacter for MDash {
             self.initial = index;
             self.was_space_before_hyphen = true;
         }
-        return None;
+        None
     }
 
     fn new() -> Self {
@@ -110,7 +110,7 @@ impl EachCharacter for CapitalizeAfterSentence {
         {
             self.was_punc_before_whitespace = true;
         }
-        return None;
+        None
     }
 
     fn new() -> Self {
