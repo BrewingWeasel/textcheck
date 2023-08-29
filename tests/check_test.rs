@@ -218,3 +218,111 @@ Linux is the kernel: the program in the system that allocates the machine's reso
 fn correctly_placed_quote() {
     assert_eq!(textcheck::check(",\""), Vec::new());
 }
+
+#[test]
+fn hypen() {
+    assert_eq!(
+        textcheck::check("That's true - sort of."),
+        vec![textcheck::Mistake {
+            line: 0,
+            start: 12,
+            end: 12
+        },]
+    );
+}
+
+#[test]
+fn twohypens() {
+    assert_eq!(
+        textcheck::check("That's true -- sort of."),
+        vec![textcheck::Mistake {
+            line: 0,
+            start: 12,
+            end: 13
+        },]
+    );
+}
+
+#[test]
+fn doublespace_on_both_sides_of_triple_hyphen() {
+    assert_eq!(
+        textcheck::check("That's true  ---  sort of."),
+        vec![
+            textcheck::Mistake {
+                line: 0,
+                start: 11,
+                end: 12
+            },
+            textcheck::Mistake {
+                line: 0,
+                start: 13,
+                end: 15
+            },
+            textcheck::Mistake {
+                line: 0,
+                start: 16,
+                end: 17
+            },
+        ]
+    );
+}
+
+#[test]
+fn hyphenated_word() {
+    assert_eq!(textcheck::check("super-awesome"), Vec::new());
+}
+
+#[test]
+fn hypen_then_lowercase_i() {
+    assert_eq!(
+        textcheck::check("That's true - i think."),
+        vec![
+            textcheck::Mistake {
+                line: 0,
+                start: 12,
+                end: 12
+            },
+            textcheck::Mistake {
+                line: 0,
+                start: 14,
+                end: 14
+            },
+        ]
+    );
+}
+
+#[test]
+fn hypen_then_doublespace_lowercase_i() {
+    assert_eq!(
+        textcheck::check("That's true -  i think."),
+        vec![
+            textcheck::Mistake {
+                line: 0,
+                start: 12,
+                end: 12
+            },
+            textcheck::Mistake {
+                line: 0,
+                start: 13,
+                end: 14
+            },
+            textcheck::Mistake {
+                line: 0,
+                start: 15,
+                end: 15
+            },
+        ]
+    );
+}
+
+#[test]
+fn hypen_end_of_line() {
+    assert_eq!(
+        textcheck::check("That's true -\nsort of."),
+        vec![textcheck::Mistake {
+            line: 0,
+            start: 12,
+            end: 12
+        },]
+    );
+}
