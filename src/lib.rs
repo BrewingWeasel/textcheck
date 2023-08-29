@@ -54,7 +54,7 @@ impl EachCharacter for MDash {
         c: char,
         index: usize,
         last_char: char,
-        _max_index: usize,
+        max_index: usize,
     ) -> Option<(usize, usize)> {
         if self.was_space_before_hyphen {
             if c.is_ascii_whitespace() {
@@ -65,6 +65,9 @@ impl EachCharacter for MDash {
             }
         }
         if c == '-' && last_char.is_ascii_whitespace() {
+            if index == max_index {
+                return Some((index, index));
+            }
             self.initial = index;
             self.was_space_before_hyphen = true;
         }
