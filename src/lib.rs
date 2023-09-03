@@ -290,6 +290,30 @@ impl EachCharacter for MultipleSpaces {
     }
 }
 
+struct InCodeBlock {
+    inblock: bool,
+}
+
+impl CheckLocked for InCodeBlock {
+    fn check<'a>(&mut self, c: char, last_char: char) -> bool {
+        if c == '`' && last_char == '`' {
+            self.inblock = !self.inblock;
+        }
+        self.inblock
+    }
+
+    fn new() -> Self {
+        InCodeBlock { inblock: false }
+    }
+}
+
+trait CheckLocked {
+    fn check<'a>(&mut self, c: char, last_char: char) -> bool;
+    fn new() -> Self
+    where
+        Self: Sized;
+}
+
 trait EachCharacter {
     fn check<'a>(
         &mut self,
@@ -322,10 +346,18 @@ pub fn check(initial: &str) -> Vec<Mistake> {
         Box::new(Quotes::new()),
     ];
 
+    let mut decide_to_run_checks: Vec<Box<dyn CheckLocked>> = vec![Box::new(InCodeBlock::new())];
+
     for (i, line) in initial.lines().enumerate() {
         let mut last_char = ' ';
         let line_length = line.len().saturating_sub(1);
-        for (ind, char) in line.char_indices() {
+        'chars: for (ind, char) in line.char_indices() {
+            for should_continue in &mut decide_to_run_checks {
+                if should_continue.check(char, last_char) {
+                    last_char = char;
+                    continue 'chars;
+                }
+            }
             for catch in &mut all_chars {
                 if let Some((start, end, name)) = catch.check(char, ind, i, last_char, line_length)
                 {
