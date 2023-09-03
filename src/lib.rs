@@ -12,11 +12,10 @@ pub struct Mistake<'a> {
 struct MultipleSpaces {
     initial: usize,
     was_last: bool,
+    last_line_indented: bool,
 }
 
-struct LowerCaseI {
-    char_before_last: char,
-}
+struct LowerCaseI {}
 
 #[derive(Debug)]
 struct MDash {
@@ -43,7 +42,7 @@ impl EachCharacter for Quotes {
         c: char,
         index: usize,
         line: usize,
-        _last_char: char,
+        _shared: &Shared,
         _max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
         if c == '"' {
@@ -74,29 +73,25 @@ impl EachCharacter for LowerCaseI {
         c: char,
         index: usize,
         _line: usize,
-        last_char: char,
+        shared: &Shared,
         _max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
-        if last_char == 'i'
-            && self.char_before_last.is_ascii_whitespace()
+        if shared.last_char == 'i'
+            && shared.char_before_last.is_ascii_whitespace()
             && (c.is_ascii_whitespace() || c == '\'')
         {
-            self.char_before_last = last_char;
             Some((
                 index.saturating_sub(1),
                 index.saturating_sub(1),
                 "'i' should be uppercase",
             ))
         } else {
-            self.char_before_last = last_char;
             None
         }
     }
 
     fn new() -> Self {
-        LowerCaseI {
-            char_before_last: ' ',
-        }
+        LowerCaseI {}
     }
 }
 
@@ -106,7 +101,7 @@ impl EachCharacter for MDash {
         c: char,
         index: usize,
         _line: usize,
-        last_char: char,
+        shared: &Shared,
         max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
         if self.was_space_before_hyphen && !self.only_space {
@@ -122,7 +117,7 @@ impl EachCharacter for MDash {
             }
         }
 
-        if c == '-' && last_char.is_ascii_whitespace() && !self.only_space {
+        if c == '-' && shared.last_char.is_ascii_whitespace() && !self.only_space {
             if index == max_index {
                 return Some((index, index, "Should be em dash (—) instead of hyphen (-)"));
             }
@@ -155,7 +150,7 @@ impl EachCharacter for CapitalizeAfterSentence {
         c: char,
         index: usize,
         _line: usize,
-        last_char: char,
+        shared: &Shared,
         max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
         if self.was_punc_before_whitespace {
@@ -170,7 +165,7 @@ impl EachCharacter for CapitalizeAfterSentence {
                 self.was_punc_before_whitespace = false;
             }
         }
-        if c.is_ascii_whitespace() && ['.', '!', '?'].contains(&last_char)
+        if c.is_ascii_whitespace() && ['.', '!', '?'].contains(&shared.last_char)
             || (max_index == index) && ['.', '!', '?'].contains(&c)
         {
             self.was_punc_before_whitespace = true;
@@ -191,10 +186,10 @@ impl EachCharacter for QuotePositioning {
         c: char,
         index: usize,
         _line: usize,
-        last_char: char,
+        shared: &Shared,
         _max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
-        if [',', '.', '!'].contains(&c) && last_char == '"' {
+        if [',', '.', '!'].contains(&c) && shared.last_char == '"' {
             Some((
                 index.saturating_sub(1),
                 index,
@@ -216,10 +211,10 @@ impl EachCharacter for SpaceBeforePunc {
         c: char,
         index: usize,
         _line: usize,
-        last_char: char,
+        shared: &Shared,
         _max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
-        if [',', '.', '!', '?', ';', ':'].contains(&c) && last_char.is_ascii_whitespace() {
+        if [',', '.', '!', '?', ';', ':'].contains(&c) && shared.last_char.is_ascii_whitespace() {
             Some((
                 index.saturating_sub(1),
                 index.saturating_sub(1),
@@ -241,13 +236,19 @@ impl EachCharacter for MultipleSpaces {
         c: char,
         index: usize,
         _line: usize,
-        last_char: char,
+        shared: &Shared,
         max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
+        if c.is_ascii_whitespace() && shared.last_char == '-' {
+            self.last_line_indented = true;
+        }
         if self.was_last {
             if !c.is_ascii_whitespace() {
                 self.was_last = false;
-                if c != '-' || self.initial != 0 {
+                if self.initial == 1 && (c == '-' || self.last_line_indented) {
+                    self.last_line_indented = true;
+                } else {
+                    self.last_line_indented = false;
                     return Some((
                         self.initial.saturating_sub(1),
                         index.saturating_sub(1),
@@ -265,7 +266,7 @@ impl EachCharacter for MultipleSpaces {
             }
         } else if c.is_ascii_whitespace() {
             if max_index == index {
-                if last_char.is_ascii_whitespace() {
+                if shared.last_char.is_ascii_whitespace() {
                     return Some((
                         index.saturating_sub(1),
                         index,
@@ -274,7 +275,7 @@ impl EachCharacter for MultipleSpaces {
                 } else {
                     return Some((index, index, "Extra whitespace at end of line"));
                 }
-            } else if last_char.is_ascii_whitespace() {
+            } else if shared.last_char.is_ascii_whitespace() {
                 self.was_last = true;
                 self.initial = index;
             }
@@ -286,34 +287,30 @@ impl EachCharacter for MultipleSpaces {
         MultipleSpaces {
             initial: 0,
             was_last: false,
+            last_line_indented: false,
         }
     }
 }
 
 struct InCodeBlock {
     inblock: bool,
-    char_before_last: char, // TODO: make a general one?
 }
 
 impl CheckLocked for InCodeBlock {
-    fn check<'a>(&mut self, c: char, last_char: char) -> bool {
-        if c == '`' && last_char == '`' && self.char_before_last == '`' {
+    fn check<'a>(&mut self, c: char, shared: &Shared) -> bool {
+        if c == '`' && shared.last_char == '`' && shared.char_before_last == '`' {
             self.inblock = !self.inblock;
         }
-        self.char_before_last = last_char;
         self.inblock
     }
 
     fn new() -> Self {
-        InCodeBlock {
-            inblock: false,
-            char_before_last: ' ',
-        }
+        InCodeBlock { inblock: false }
     }
 }
 
 trait CheckLocked {
-    fn check<'a>(&mut self, c: char, last_char: char) -> bool;
+    fn check<'a>(&mut self, c: char, shared: &Shared) -> bool;
     fn new() -> Self
     where
         Self: Sized;
@@ -325,7 +322,7 @@ trait EachCharacter {
         c: char,
         index: usize,
         line: usize,
-        last_char: char,
+        shared: &Shared,
         max_index: usize,
     ) -> Option<(usize, usize, &'a str)>;
     fn on_ending<'a>(&self) -> Option<(usize, usize, usize, &'a str)> {
@@ -335,6 +332,18 @@ trait EachCharacter {
     fn new() -> Self
     where
         Self: Sized;
+}
+
+pub struct Shared {
+    last_char: char,
+    char_before_last: char,
+}
+
+impl Shared {
+    fn update(&mut self, _index: usize, c: char) {
+        self.char_before_last = self.last_char;
+        self.last_char = c;
+    }
 }
 
 pub fn check(initial: &str) -> Vec<Mistake> {
@@ -353,19 +362,23 @@ pub fn check(initial: &str) -> Vec<Mistake> {
 
     let mut decide_to_run_checks: Vec<Box<dyn CheckLocked>> = vec![Box::new(InCodeBlock::new())];
 
+    let mut shared = Shared {
+        last_char: ' ',
+        char_before_last: ' ',
+    };
+
     for (i, line) in initial.lines().enumerate() {
-        let mut last_char = ' ';
+        shared.char_before_last = ' ';
         let line_length = line.len().saturating_sub(1);
         'chars: for (ind, char) in line.char_indices() {
             for should_continue in &mut decide_to_run_checks {
-                if should_continue.check(char, last_char) {
-                    last_char = char;
+                if should_continue.check(char, &shared) {
+                    shared.update(ind, char);
                     continue 'chars;
                 }
             }
             for catch in &mut all_chars {
-                if let Some((start, end, name)) = catch.check(char, ind, i, last_char, line_length)
-                {
+                if let Some((start, end, name)) = catch.check(char, ind, i, &shared, line_length) {
                     mistakes.push(Mistake {
                         line: i,
                         start,
@@ -374,7 +387,7 @@ pub fn check(initial: &str) -> Vec<Mistake> {
                     });
                 }
             }
-            last_char = char;
+            shared.update(ind, char);
         }
         for catch in &mut all_chars {
             catch.on_line_ending();

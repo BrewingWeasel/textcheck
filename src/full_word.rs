@@ -33,7 +33,7 @@ impl EachCharacter for WordCapitalization {
         c: char,
         index: usize,
         _line: usize,
-        _last_char: char,
+        _shared: &crate::Shared,
         max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
         if c.is_ascii_whitespace() || max_index == index || c.is_ascii_punctuation() {
