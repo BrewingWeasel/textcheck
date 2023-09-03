@@ -50,7 +50,7 @@ impl EachCharacter for WordCapitalization {
         } else {
             self.word.push(c)
         }
-        return None;
+        None
     }
 
     fn new() -> Self {

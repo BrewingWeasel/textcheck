@@ -49,7 +49,7 @@ impl EachCharacter for Quotes {
         if c == '"' {
             self.quote_level_starts.push((line, index))
         }
-        return None;
+        None
     }
 
     fn new() -> Self {
