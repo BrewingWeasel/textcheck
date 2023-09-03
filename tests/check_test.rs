@@ -663,3 +663,61 @@ fn matched_quote() {
 fn matched_quote_two_lines() {
     assert_eq!(textcheck::check("\"hi!\nHow are you?\""), Vec::new());
 }
+
+#[test]
+fn markdown_list() {
+    assert_eq!(
+        textcheck::check(
+            "- one
+- two
+- three
+"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn markdown_list_indented_part() {
+    assert_eq!(
+        textcheck::check(
+            "- one
+- two
+  - 2
+  - 2.5
+- three
+  - 3
+"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn markdown_list_indented_double_space() {
+    assert_eq!(
+        textcheck::check(
+            "- one
+-  two
+  - 2
+  - 2.5
+-  three
+  - 3
+"
+        ),
+        vec![
+            textcheck::Mistake {
+                line: 1,
+                start: 1,
+                end: 2,
+                name: "Multiple spaces used instead of one"
+            },
+            textcheck::Mistake {
+                line: 4,
+                start: 1,
+                end: 2,
+                name: "Multiple spaces used instead of one"
+            }
+        ]
+    );
+}
