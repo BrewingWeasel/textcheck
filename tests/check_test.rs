@@ -237,7 +237,7 @@ Linux is the kernel: the program in the system that allocates the machine's reso
 
 #[test]
 fn correctly_placed_quote() {
-    assert_eq!(textcheck::check(",\""), Vec::new());
+    assert_eq!(textcheck::check("d,\""), Vec::new());
 }
 
 #[test]
@@ -560,4 +560,43 @@ fn capitalize_weekday_after_new_line_one_sentence() {
 #[test]
 fn already_capitalized() {
     assert_eq!(textcheck::check("Monday is the day today."), Vec::new());
+}
+
+#[test]
+fn punctuation_after_space() {
+    assert_eq!(
+        textcheck::check("hi ."),
+        vec![textcheck::Mistake {
+            line: 0,
+            start: 2,
+            end: 2,
+            name: "There shouldn't be a space before punctuation",
+        },]
+    );
+}
+
+#[test]
+fn punctuation_after_tab() {
+    assert_eq!(
+        textcheck::check("hi\t."),
+        vec![textcheck::Mistake {
+            line: 0,
+            start: 2,
+            end: 2,
+            name: "There shouldn't be a space before punctuation",
+        },]
+    );
+}
+
+#[test]
+fn punctuation_after_space2() {
+    assert_eq!(
+        textcheck::check("hi !"),
+        vec![textcheck::Mistake {
+            line: 0,
+            start: 2,
+            end: 2,
+            name: "There shouldn't be a space before punctuation",
+        },]
+    );
 }

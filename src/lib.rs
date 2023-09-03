@@ -29,6 +29,8 @@ struct CapitalizeAfterSentence {
     was_punc_before_whitespace: bool,
 }
 
+struct SpaceBeforePunc {}
+
 impl EachCharacter for LowerCaseI {
     fn check<'a>(
         &mut self,
@@ -158,6 +160,30 @@ impl EachCharacter for QuotePositioning {
     }
 }
 
+impl EachCharacter for SpaceBeforePunc {
+    fn check<'a>(
+        &mut self,
+        c: char,
+        index: usize,
+        last_char: char,
+        _max_index: usize,
+    ) -> Option<(usize, usize, &'a str)> {
+        if [',', '.', '!', '?', ';', ':'].contains(&c) && last_char.is_ascii_whitespace() {
+            Some((
+                index.saturating_sub(1),
+                index.saturating_sub(1),
+                "There shouldn't be a space before punctuation",
+            ))
+        } else {
+            None
+        }
+    }
+
+    fn new() -> Self {
+        SpaceBeforePunc {}
+    }
+}
+
 impl EachCharacter for MultipleSpaces {
     fn check<'a>(
         &mut self,
@@ -233,6 +259,7 @@ pub fn check(initial: &str) -> Vec<Mistake> {
         Box::new(MDash::new()),
         Box::new(CapitalizeAfterSentence::new()),
         Box::new(full_word::WordCapitalization::new()),
+        Box::new(SpaceBeforePunc::new()),
     ];
 
     for (i, line) in initial.lines().enumerate() {
