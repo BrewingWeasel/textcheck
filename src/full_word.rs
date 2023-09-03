@@ -1,7 +1,7 @@
 use crate::EachCharacter;
 
 // TODO: more things, countries, languages etc
-const WORDS_TO_CAPITALIZE: [&str; 19] = [
+const WORDS_TO_CAPITALIZE: [&str; 18] = [
     "monday",
     "tuesday",
     "wednesday",
@@ -13,7 +13,7 @@ const WORDS_TO_CAPITALIZE: [&str; 19] = [
     "february",
     "march",
     "april",
-    "may",
+    // "may", can be used just as the word
     "june",
     "july",
     "august",
