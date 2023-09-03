@@ -18,9 +18,11 @@ struct LowerCaseI {
     char_before_last: char,
 }
 
+#[derive(Debug)]
 struct MDash {
     was_space_before_hyphen: bool,
     initial: usize,
+    only_space: bool,
 }
 
 struct QuotePositioning {}
@@ -107,7 +109,7 @@ impl EachCharacter for MDash {
         last_char: char,
         max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
-        if self.was_space_before_hyphen {
+        if self.was_space_before_hyphen && !self.only_space {
             if c.is_ascii_whitespace() {
                 self.was_space_before_hyphen = false;
                 return Some((
@@ -120,19 +122,28 @@ impl EachCharacter for MDash {
             }
         }
 
-        if c == '-' && last_char.is_ascii_whitespace() {
+        if c == '-' && last_char.is_ascii_whitespace() && !self.only_space {
             if index == max_index {
                 return Some((index, index, "Should be em dash (—) instead of hyphen (-)"));
             }
             self.initial = index;
             self.was_space_before_hyphen = true;
         }
+
+        if self.only_space {
+            self.only_space = c.is_ascii_whitespace();
+        }
         None
+    }
+
+    fn on_line_ending(&mut self) {
+        self.only_space = true;
     }
 
     fn new() -> Self {
         MDash {
             was_space_before_hyphen: false,
+            only_space: true,
             initial: 0,
         }
     }
@@ -236,11 +247,13 @@ impl EachCharacter for MultipleSpaces {
         if self.was_last {
             if !c.is_ascii_whitespace() {
                 self.was_last = false;
-                return Some((
-                    self.initial.saturating_sub(1),
-                    index.saturating_sub(1),
-                    "Multiple spaces used instead of one",
-                ));
+                if c != '-' || self.initial != 0 {
+                    return Some((
+                        self.initial.saturating_sub(1),
+                        index.saturating_sub(1),
+                        "Multiple spaces used instead of one",
+                    ));
+                }
             }
             if max_index == index {
                 self.was_last = false;
@@ -289,6 +302,7 @@ trait EachCharacter {
     fn on_ending<'a>(&self) -> Option<(usize, usize, usize, &'a str)> {
         None
     }
+    fn on_line_ending(&mut self) {}
     fn new() -> Self
     where
         Self: Sized;
@@ -324,6 +338,9 @@ pub fn check(initial: &str) -> Vec<Mistake> {
                 }
             }
             last_char = char;
+        }
+        for catch in &mut all_chars {
+            catch.on_line_ending();
         }
     }
     for catch in &mut all_chars {
