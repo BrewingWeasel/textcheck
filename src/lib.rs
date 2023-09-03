@@ -292,18 +292,23 @@ impl EachCharacter for MultipleSpaces {
 
 struct InCodeBlock {
     inblock: bool,
+    char_before_last: char, // TODO: make a general one?
 }
 
 impl CheckLocked for InCodeBlock {
     fn check<'a>(&mut self, c: char, last_char: char) -> bool {
-        if c == '`' && last_char == '`' {
+        if c == '`' && last_char == '`' && self.char_before_last == '`' {
             self.inblock = !self.inblock;
         }
+        self.char_before_last = last_char;
         self.inblock
     }
 
     fn new() -> Self {
-        InCodeBlock { inblock: false }
+        InCodeBlock {
+            inblock: false,
+            char_before_last: ' ',
+        }
     }
 }
 
