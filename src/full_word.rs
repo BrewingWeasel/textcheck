@@ -32,6 +32,7 @@ impl EachCharacter for WordCapitalization {
         &mut self,
         c: char,
         index: usize,
+        _line: usize,
         _last_char: char,
         max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {

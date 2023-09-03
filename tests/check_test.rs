@@ -162,6 +162,12 @@ fn space_before_misplaced_quote() {
                 end: 2,
                 name: "The comma should go before the quotation mark",
             },
+            textcheck::Mistake {
+                line: 0,
+                start: 1,
+                end: 1,
+                name: "Unmatched quote"
+            }
         ]
     );
 }
@@ -237,7 +243,7 @@ Linux is the kernel: the program in the system that allocates the machine's reso
 
 #[test]
 fn correctly_placed_quote() {
-    assert_eq!(textcheck::check("d,\""), Vec::new());
+    assert_eq!(textcheck::check("\"d,\""), Vec::new());
 }
 
 #[test]
@@ -599,4 +605,61 @@ fn punctuation_after_space2() {
             name: "There shouldn't be a space before punctuation",
         },]
     );
+}
+
+#[test]
+fn unmatched_quote() {
+    assert_eq!(
+        textcheck::check("\"hi!"),
+        vec![textcheck::Mistake {
+            line: 0,
+            start: 0,
+            end: 0,
+            name: "Unmatched quote",
+        },]
+    );
+}
+
+#[test]
+fn unmatched_quote_multiple_lines() {
+    assert_eq!(
+        textcheck::check("\"hi!\n\n\n"),
+        vec![textcheck::Mistake {
+            line: 0,
+            start: 0,
+            end: 0,
+            name: "Unmatched quote",
+        },]
+    );
+}
+
+#[test]
+fn matched_quotes_multiple_lines() {
+    assert_eq!(
+        textcheck::check("\"Hi!\"\n\"Hello!\n\"\"Stuff.\""),
+        Vec::new(),
+    );
+}
+
+#[test]
+fn unmatched_quotes_multiple_lines() {
+    assert_eq!(
+        textcheck::check("\"Hi!\"\n\"Hello!\n\"Stuff.\""),
+        vec![textcheck::Mistake {
+            line: 2,
+            start: 7,
+            end: 7,
+            name: "Unmatched quote",
+        }],
+    );
+}
+
+#[test]
+fn matched_quote() {
+    assert_eq!(textcheck::check("\"hi!\""), Vec::new());
+}
+
+#[test]
+fn matched_quote_two_lines() {
+    assert_eq!(textcheck::check("\"hi!\nHow are you?\""), Vec::new());
 }

@@ -32,7 +32,7 @@ struct CapitalizeAfterSentence {
 struct SpaceBeforePunc {}
 
 struct Quotes {
-    quote_level_starts: Vec<usize>,
+    quote_level_starts: Vec<(usize, usize)>,
 }
 
 impl EachCharacter for Quotes {
@@ -40,17 +40,12 @@ impl EachCharacter for Quotes {
         &mut self,
         c: char,
         index: usize,
+        line: usize,
         _last_char: char,
-        max_index: usize,
+        _max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
         if c == '"' {
-            self.quote_level_starts.push(index)
-        }
-        if index == max_index {
-            if self.quote_level_starts.len() % 2 == 1 {
-                let index = self.quote_level_starts.last().unwrap();
-                return Some((*index, *index, "Unmatched quote"));
-            }
+            self.quote_level_starts.push((line, index))
         }
         return None;
     }
@@ -60,6 +55,15 @@ impl EachCharacter for Quotes {
             quote_level_starts: Vec::new(),
         }
     }
+
+    fn on_ending<'a>(&self) -> Option<(usize, usize, usize, &'a str)> {
+        if self.quote_level_starts.len() % 2 == 1 {
+            let (line, index) = self.quote_level_starts.last().unwrap();
+            Some((*index, *index, *line, "Unmatched quote"))
+        } else {
+            None
+        }
+    }
 }
 
 impl EachCharacter for LowerCaseI {
@@ -67,6 +71,7 @@ impl EachCharacter for LowerCaseI {
         &mut self,
         c: char,
         index: usize,
+        _line: usize,
         last_char: char,
         _max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
@@ -98,6 +103,7 @@ impl EachCharacter for MDash {
         &mut self,
         c: char,
         index: usize,
+        _line: usize,
         last_char: char,
         max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
@@ -137,6 +143,7 @@ impl EachCharacter for CapitalizeAfterSentence {
         &mut self,
         c: char,
         index: usize,
+        _line: usize,
         last_char: char,
         max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
@@ -172,6 +179,7 @@ impl EachCharacter for QuotePositioning {
         &mut self,
         c: char,
         index: usize,
+        _line: usize,
         last_char: char,
         _max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
@@ -196,6 +204,7 @@ impl EachCharacter for SpaceBeforePunc {
         &mut self,
         c: char,
         index: usize,
+        _line: usize,
         last_char: char,
         _max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
@@ -220,6 +229,7 @@ impl EachCharacter for MultipleSpaces {
         &mut self,
         c: char,
         index: usize,
+        _line: usize,
         last_char: char,
         max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
@@ -272,9 +282,13 @@ trait EachCharacter {
         &mut self,
         c: char,
         index: usize,
+        line: usize,
         last_char: char,
         max_index: usize,
     ) -> Option<(usize, usize, &'a str)>;
+    fn on_ending<'a>(&self) -> Option<(usize, usize, usize, &'a str)> {
+        None
+    }
     fn new() -> Self
     where
         Self: Sized;
@@ -299,7 +313,8 @@ pub fn check(initial: &str) -> Vec<Mistake> {
         let line_length = line.len().saturating_sub(1);
         for (ind, char) in line.char_indices() {
             for catch in &mut all_chars {
-                if let Some((start, end, name)) = catch.check(char, ind, last_char, line_length) {
+                if let Some((start, end, name)) = catch.check(char, ind, i, last_char, line_length)
+                {
                     mistakes.push(Mistake {
                         line: i,
                         start,
@@ -309,6 +324,16 @@ pub fn check(initial: &str) -> Vec<Mistake> {
                 }
             }
             last_char = char;
+        }
+    }
+    for catch in &mut all_chars {
+        if let Some((start, end, line, name)) = catch.on_ending() {
+            mistakes.push(Mistake {
+                line,
+                start,
+                end,
+                name,
+            });
         }
     }
     mistakes
