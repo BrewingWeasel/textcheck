@@ -31,6 +31,37 @@ struct CapitalizeAfterSentence {
 
 struct SpaceBeforePunc {}
 
+struct Quotes {
+    quote_level_starts: Vec<usize>,
+}
+
+impl EachCharacter for Quotes {
+    fn check<'a>(
+        &mut self,
+        c: char,
+        index: usize,
+        _last_char: char,
+        max_index: usize,
+    ) -> Option<(usize, usize, &'a str)> {
+        if c == '"' {
+            self.quote_level_starts.push(index)
+        }
+        if index == max_index {
+            if self.quote_level_starts.len() % 2 == 1 {
+                let index = self.quote_level_starts.last().unwrap();
+                return Some((*index, *index, "Unmatched quote"));
+            }
+        }
+        return None;
+    }
+
+    fn new() -> Self {
+        Quotes {
+            quote_level_starts: Vec::new(),
+        }
+    }
+}
+
 impl EachCharacter for LowerCaseI {
     fn check<'a>(
         &mut self,
@@ -260,6 +291,7 @@ pub fn check(initial: &str) -> Vec<Mistake> {
         Box::new(CapitalizeAfterSentence::new()),
         Box::new(full_word::WordCapitalization::new()),
         Box::new(SpaceBeforePunc::new()),
+        Box::new(Quotes::new()),
     ];
 
     for (i, line) in initial.lines().enumerate() {
