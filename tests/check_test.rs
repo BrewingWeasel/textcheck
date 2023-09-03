@@ -721,3 +721,91 @@ fn markdown_list_indented_double_space() {
         ]
     );
 }
+
+#[test]
+fn markdown_codeblock() {
+    assert_eq!(
+        textcheck::check(
+            "For example:
+```python
+now    anything  should     be   ok
+```
+"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn markdown_codeblock_single_line() {
+    assert_eq!(
+        textcheck::check(
+            "For example:
+```now    anything  should     be   ok```
+"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn markdown_codeblock_single_line_start_with() {
+    assert_eq!(
+        textcheck::check("```now    anything  should     be   ok```"),
+        Vec::new()
+    );
+}
+
+#[test]
+fn markdown_codeblock_error_after() {
+    assert_eq!(
+        textcheck::check(
+            "For example:
+```now    anything  should     be   ok```
+but  not here.
+"
+        ),
+        vec![textcheck::Mistake {
+            line: 2,
+            start: 3,
+            end: 4,
+            name: "Multiple spaces used instead of one"
+        }]
+    );
+}
+
+#[test]
+fn two_markdown_codeblocks_error_between() {
+    assert_eq!(
+        textcheck::check(
+            "For example:
+```now    anything  should     be   ok```
+but  not here. ```but    again    here```
+"
+        ),
+        vec![textcheck::Mistake {
+            line: 2,
+            start: 3,
+            end: 4,
+            name: "Multiple spaces used instead of one"
+        }]
+    );
+}
+
+#[test]
+fn empty_code_block() {
+    assert_eq!(textcheck::check("``````"), Vec::new());
+}
+
+#[test]
+fn two_backticks() {
+    assert_eq!(
+        textcheck::check("``propblem  here``"),
+        vec![textcheck::Mistake {
+            line: 0,
+            start: 10,
+            end: 11,
+            name: "Multiple spaces used instead of one"
+        }]
+    );
+}
