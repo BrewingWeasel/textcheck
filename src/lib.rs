@@ -20,6 +20,7 @@ struct InTable {
     intable: bool,
     last_line_was_table_start: bool,
     cur_line_table_start: bool,
+    was_in_table: bool,
 }
 
 impl CheckLocked for InTable {
@@ -32,9 +33,10 @@ impl CheckLocked for InTable {
     ) -> ContinueState {
         if self.intable {
             if (index == 0 || index == max_index) && c != '|' {
+                self.was_in_table = true;
                 self.intable = false;
             }
-        } else if index == 0 && c == '|' && !self.last_line_was_table_start {
+        } else if index == 0 && c == '|' && !self.last_line_was_table_start && !self.was_in_table {
             self.cur_line_table_start = true;
         } else if self.cur_line_table_start && index == max_index && c == '|' {
             // If the first possible line of the table ends with a pipe, check the next line to
@@ -45,6 +47,7 @@ impl CheckLocked for InTable {
             // If the line that would be seperating the column headers isn't only made up of valid
             // characters, we aren't in a table
             if !c.is_ascii_whitespace() && ![':', '-', '|'].contains(&c) {
+                self.was_in_table = true;
                 self.last_line_was_table_start = false;
             } else if index == max_index {
                 self.intable = true;
@@ -68,6 +71,7 @@ impl CheckLocked for InTable {
             intable: false,
             last_line_was_table_start: false,
             cur_line_table_start: false,
+            was_in_table: false,
         }
     }
 }
