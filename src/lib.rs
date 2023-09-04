@@ -45,13 +45,13 @@ impl EachCharacter for Quotes {
         _max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
         if c == '"' {
-            self.quote_level_starts.push((line, index))
+            self.quote_level_starts.push((line, index));
         }
         None
     }
 
     fn new() -> Self {
-        Quotes {
+        Self {
             quote_level_starts: Vec::new(),
         }
     }
@@ -90,7 +90,7 @@ impl EachCharacter for LowerCaseI {
     }
 
     fn new() -> Self {
-        LowerCaseI {}
+        Self {}
     }
 }
 
@@ -135,7 +135,7 @@ impl EachCharacter for MDash {
     }
 
     fn new() -> Self {
-        MDash {
+        Self {
             was_space_before_hyphen: false,
             only_space: true,
             initial: 0,
@@ -173,7 +173,7 @@ impl EachCharacter for CapitalizeAfterSentence {
     }
 
     fn new() -> Self {
-        CapitalizeAfterSentence {
+        Self {
             was_punc_before_whitespace: false,
         }
     }
@@ -200,7 +200,7 @@ impl EachCharacter for QuotePositioning {
     }
 
     fn new() -> Self {
-        QuotePositioning {}
+        Self {}
     }
 }
 
@@ -225,7 +225,7 @@ impl EachCharacter for SpaceBeforePunc {
     }
 
     fn new() -> Self {
-        SpaceBeforePunc {}
+        Self {}
     }
 }
 
@@ -271,9 +271,8 @@ impl EachCharacter for MultipleSpaces {
                         index,
                         "Extra whitespace at end of line",
                     ));
-                } else {
-                    return Some((index, index, "Extra whitespace at end of line"));
                 }
+                return Some((index, index, "Extra whitespace at end of line"));
             } else if shared.last_char.is_ascii_whitespace() {
                 self.was_last = true;
                 self.initial = index;
@@ -283,7 +282,7 @@ impl EachCharacter for MultipleSpaces {
     }
 
     fn new() -> Self {
-        MultipleSpaces {
+        Self {
             initial: 0,
             was_last: false,
         }
@@ -303,7 +302,7 @@ impl CheckLocked for InCodeBlock {
     }
 
     fn new() -> Self {
-        InCodeBlock { inblock: false }
+        Self { inblock: false }
     }
 }
 
@@ -436,7 +435,7 @@ pub fn check(initial: &str) -> Vec<Mistake> {
     mistakes
 }
 
-pub fn display(mistake: Mistake, mut lines: Lines) {
+pub fn display(mistake: &Mistake, mut lines: Lines) {
     let mut line = lines.nth(mistake.line).unwrap().chars();
     print!(
         "\x1b[31mLine {}\x1b[0m (\x1b[33m{}-{}\x1b[0m) {}: ",

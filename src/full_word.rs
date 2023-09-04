@@ -48,13 +48,13 @@ impl EachCharacter for WordCapitalization {
             }
             self.word = String::new();
         } else {
-            self.word.push(c)
+            self.word.push(c);
         }
         None
     }
 
     fn new() -> Self {
-        WordCapitalization {
+        Self {
             word: String::new(),
         }
     }
