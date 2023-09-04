@@ -16,12 +16,74 @@ struct InCodeBlock {
     inblock: bool,
 }
 
+struct InTable {
+    intable: bool,
+    last_line_was_table_start: bool,
+    cur_line_table_start: bool,
+}
+
+impl CheckLocked for InTable {
+    fn check(
+        &mut self,
+        c: char,
+        index: usize,
+        max_index: usize,
+        _shared: &Shared,
+    ) -> ContinueState {
+        if self.intable {
+            if (index == 0 || index == max_index) && c != '|' {
+                self.intable = false;
+            }
+        } else if index == 0 && c == '|' && !self.last_line_was_table_start {
+            self.cur_line_table_start = true;
+        } else if self.cur_line_table_start && index == max_index && c == '|' {
+            // If the first possible line of the table ends with a pipe, check the next line to
+            // confirm that it is a table
+            self.cur_line_table_start = false;
+            self.last_line_was_table_start = true;
+        } else if self.last_line_was_table_start {
+            // If the line that would be seperating the column headers isn't only made up of valid
+            // characters, we aren't in a table
+            if !c.is_ascii_whitespace() && ![':', '-', '|'].contains(&c) {
+                self.last_line_was_table_start = false;
+            } else if index == max_index {
+                self.intable = true;
+                self.last_line_was_table_start = false;
+            }
+        }
+        if self.intable {
+            ContinueState::True
+        } else if self.last_line_was_table_start || self.cur_line_table_start {
+            ContinueState::Possible
+        } else {
+            ContinueState::False
+        }
+    }
+
+    fn new() -> Self
+    where
+        Self: Sized,
+    {
+        InTable {
+            intable: false,
+            last_line_was_table_start: false,
+            cur_line_table_start: false,
+        }
+    }
+}
+
 impl CheckLocked for InCodeBlock {
-    fn check<'a>(&mut self, c: char, shared: &Shared) -> bool {
+    fn check<'a>(
+        &mut self,
+        c: char,
+        _index: usize,
+        _max_index: usize,
+        shared: &Shared,
+    ) -> ContinueState {
         if c == '`' && shared.last_char == '`' && shared.char_before_last == '`' {
             self.inblock = !self.inblock;
         }
-        self.inblock
+        ContinueState::from_bool(self.inblock)
     }
 
     fn new() -> Self {
@@ -29,8 +91,24 @@ impl CheckLocked for InCodeBlock {
     }
 }
 
+pub enum ContinueState {
+    True,
+    Possible,
+    False,
+}
+
+impl ContinueState {
+    pub fn from_bool(b: bool) -> Self {
+        if b {
+            ContinueState::True
+        } else {
+            ContinueState::False
+        }
+    }
+}
+
 trait CheckLocked {
-    fn check(&mut self, c: char, shared: &Shared) -> bool;
+    fn check(&mut self, c: char, index: usize, max_index: usize, shared: &Shared) -> ContinueState;
     fn new() -> Self
     where
         Self: Sized;
@@ -105,7 +183,8 @@ pub fn check(initial: &str) -> Vec<Mistake> {
         Box::new(punctuation::Quotes::new()),
     ];
 
-    let mut decide_to_run_checks: Vec<Box<dyn CheckLocked>> = vec![Box::new(InCodeBlock::new())];
+    let mut decide_to_run_checks: Vec<Box<dyn CheckLocked>> =
+        vec![Box::new(InCodeBlock::new()), Box::new(InTable::new())];
 
     let mut shared = Shared {
         last_char: ' ',
@@ -116,6 +195,9 @@ pub fn check(initial: &str) -> Vec<Mistake> {
         has_had_starter: false,
     };
 
+    let mut in_possible_continue_state: Vec<bool> = vec![false; decide_to_run_checks.len()];
+    let mut possible_mistakes: Vec<Mistake> = Vec::new();
+
     for (i, line) in initial.lines().enumerate() {
         shared.char_before_last = ' ';
         shared.fake_whitespace = true;
@@ -123,20 +205,42 @@ pub fn check(initial: &str) -> Vec<Mistake> {
         shared.update_line();
 
         'chars: for (ind, char) in line.char_indices() {
-            for should_continue in &mut decide_to_run_checks {
-                if should_continue.check(char, &shared) {
-                    shared.update(ind, char);
-                    continue 'chars;
+            for (check_i, should_continue) in decide_to_run_checks.iter_mut().enumerate() {
+                match should_continue.check(char, ind, line_length, &shared) {
+                    ContinueState::True => {
+                        if in_possible_continue_state[check_i] {
+                            possible_mistakes.clear();
+                            in_possible_continue_state[check_i] = false;
+                        }
+                        shared.update(ind, char);
+                        continue 'chars;
+                    }
+                    ContinueState::Possible => {
+                        in_possible_continue_state[check_i] = true;
+                    }
+                    ContinueState::False => {
+                        if in_possible_continue_state[check_i] {
+                            println!("fal");
+                            mistakes.append(&mut possible_mistakes);
+                            in_possible_continue_state[check_i] = false;
+                        }
+                    }
                 }
             }
+
             for catch in &mut all_chars {
                 if let Some((start, end, name)) = catch.check(char, ind, i, &shared, line_length) {
-                    mistakes.push(Mistake {
+                    let mistake = Mistake {
                         line: i,
                         start,
                         end,
                         name,
-                    });
+                    };
+                    if in_possible_continue_state.iter().any(|x| *x) {
+                        possible_mistakes.push(mistake);
+                    } else {
+                        mistakes.push(mistake);
+                    }
                 }
             }
             shared.update(ind, char);
