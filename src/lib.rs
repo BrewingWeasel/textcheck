@@ -12,7 +12,6 @@ pub struct Mistake<'a> {
 struct MultipleSpaces {
     initial: usize,
     was_last: bool,
-    last_line_indented: bool,
 }
 
 struct LowerCaseI {}
@@ -239,16 +238,15 @@ impl EachCharacter for MultipleSpaces {
         shared: &Shared,
         max_index: usize,
     ) -> Option<(usize, usize, &'a str)> {
-        if c.is_ascii_whitespace() && shared.last_char == '-' {
-            self.last_line_indented = true;
-        }
+        let starts_with_bullet_point = c.is_ascii_whitespace() && shared.last_char == '-';
+
         if self.was_last {
             if !c.is_ascii_whitespace() {
                 self.was_last = false;
-                if self.initial == 1 && (c == '-' || self.last_line_indented) {
-                    self.last_line_indented = true;
+                if self.initial == 1
+                    && (c == '-' || starts_with_bullet_point || shared.last_indent == index)
+                {
                 } else {
-                    self.last_line_indented = false;
                     return Some((
                         self.initial.saturating_sub(1),
                         index.saturating_sub(1),
@@ -256,6 +254,7 @@ impl EachCharacter for MultipleSpaces {
                     ));
                 }
             }
+
             if max_index == index {
                 self.was_last = false;
                 return Some((
@@ -287,7 +286,6 @@ impl EachCharacter for MultipleSpaces {
         MultipleSpaces {
             initial: 0,
             was_last: false,
-            last_line_indented: false,
         }
     }
 }
@@ -310,7 +308,7 @@ impl CheckLocked for InCodeBlock {
 }
 
 trait CheckLocked {
-    fn check<'a>(&mut self, c: char, shared: &Shared) -> bool;
+    fn check(&mut self, c: char, shared: &Shared) -> bool;
     fn new() -> Self
     where
         Self: Sized;
@@ -337,12 +335,37 @@ trait EachCharacter {
 pub struct Shared {
     last_char: char,
     char_before_last: char,
+    fake_whitespace: bool,
+    last_numeric: bool,
+    has_had_starter: bool,
+    last_indent: usize,
 }
 
 impl Shared {
-    fn update(&mut self, _index: usize, c: char) {
+    fn update(&mut self, index: usize, c: char) {
         self.char_before_last = self.last_char;
         self.last_char = c;
+        if self.fake_whitespace {
+            if self.last_numeric {
+                if !c.is_numeric() {
+                    self.last_numeric = false;
+                    if c != '.' {
+                        self.fake_whitespace = false;
+                        self.last_indent = index;
+                    }
+                }
+            } else if c.is_numeric() && index == 0 {
+                self.last_numeric = true;
+            } else if !self.has_had_starter && (c == '-' || c == '*') {
+                self.has_had_starter = true;
+            } else if !c.is_ascii_whitespace() {
+                self.fake_whitespace = false;
+                self.last_indent = index;
+            }
+        }
+    }
+    fn update_line(&mut self) {
+        self.has_had_starter = false;
     }
 }
 
@@ -365,11 +388,18 @@ pub fn check(initial: &str) -> Vec<Mistake> {
     let mut shared = Shared {
         last_char: ' ',
         char_before_last: ' ',
+        fake_whitespace: true,
+        last_numeric: false,
+        last_indent: 0,
+        has_had_starter: false,
     };
 
     for (i, line) in initial.lines().enumerate() {
         shared.char_before_last = ' ';
+        shared.fake_whitespace = true;
         let line_length = line.len().saturating_sub(1);
+        shared.update_line();
+
         'chars: for (ind, char) in line.char_indices() {
             for should_continue in &mut decide_to_run_checks {
                 if should_continue.check(char, &shared) {

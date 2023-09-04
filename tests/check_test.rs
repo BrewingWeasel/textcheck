@@ -809,3 +809,101 @@ fn two_backticks() {
         }]
     );
 }
+
+#[test]
+fn markdown_list_indented_extra_lines() {
+    assert_eq!(
+        textcheck::check(
+            "- one
+- two
+  yes
+  - 2
+    two
+  - 2.5
+    yes
+- three
+  - 3
+    yes
+"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn markdown_list_indented_extra_lines_bold_beginning() {
+    assert_eq!(
+        textcheck::check(
+            "- **hello**
+  there
+  there again"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn markdown_list_indented_extra_lines_wrong_indent() {
+    assert_eq!(
+        textcheck::check(
+            "- one
+- two
+   yes
+  - 2
+    two
+  - 2.5
+   yes
+- three
+  - 3
+    yes
+"
+        ),
+        vec![
+            textcheck::Mistake {
+                line: 2,
+                start: 0,
+                end: 2,
+                name: "Multiple spaces used instead of one"
+            },
+            textcheck::Mistake {
+                line: 6,
+                start: 0,
+                end: 2,
+                name: "Multiple spaces used instead of one"
+            }
+        ]
+    );
+}
+
+#[test]
+fn markdown_list_indented_extra_lines_wrong_indent_italic() {
+    assert_eq!(
+        textcheck::check(
+            "- *one*
+- *two*
+   yes
+  - 2
+    two
+  - 2.5
+   *yes*
+- three
+  - 3
+    yes
+"
+        ),
+        vec![
+            textcheck::Mistake {
+                line: 2,
+                start: 0,
+                end: 2,
+                name: "Multiple spaces used instead of one"
+            },
+            textcheck::Mistake {
+                line: 6,
+                start: 0,
+                end: 2,
+                name: "Multiple spaces used instead of one"
+            }
+        ]
+    );
+}
