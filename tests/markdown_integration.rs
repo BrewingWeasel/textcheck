@@ -338,6 +338,84 @@ oh  no an error"
 }
 
 #[test]
+fn markdown_table_and_then_some() {
+    assert_eq!(
+        textcheck::check(
+            "\"no error here,\"
+| 1            | 2      | 3     |
+| :----------: | :----: | :---: |
+| one          | two    | three |
+| one          | two    | three |
+| one          | two    | three |
+| one          | two    | three |
+and no error here"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn good_markdown_table_and_then_again() {
+    assert_eq!(
+        textcheck::check(
+            "\"no error here,\"
+| 1            | 2      | 3     |
+| :----------: | :----: | :---: |
+| one          | two    | three |
+and no error here
+| 1            | 2      | 3     |
+| :----------: | :----: | :---: |
+| one          | two    | three |
+and none here!"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn good_markdown_table_and_then_again_with_pipe() {
+    assert_eq!(
+        textcheck::check(
+            "\"no error here,\"
+| 1            | 2      | 3     |
+| :----------: | :----: | :---: |
+| one          | two    | three |
+and no error | here
+| 1            | 2      | 3     |
+| :----------: | :----: | :---: |
+| one          | two    | three |
+and none here!"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn good_markdown_table_and_then_twice_more_empty_lines() {
+    assert_eq!(
+        textcheck::check(
+            "\"no error here,\"
+| 1            | 2      | 3     |
+| :----------: | :----: | :---: |
+| one          | two    | three |
+| vienas       | du     | trys  |
+
+| 1            | 2      | 3     |
+| :----------: | :----: | :---: |
+| one          | two    | three |
+| vienas       | du     | trys  |
+| uno          | dos    | tres  |
+
+| 1            | 2      | 3     |
+| :----------: | :----: | :---: |
+| one          | two    | three |
+| vienas       | du     | trys  |"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
 fn markdown_table_invalid() {
     assert_eq!(
         textcheck::check(

@@ -16,6 +16,7 @@ struct InCodeBlock {
     inblock: bool,
 }
 
+#[derive(Debug)]
 struct InTable {
     intable: bool,
     last_line_was_table_start: bool,
@@ -53,6 +54,8 @@ impl CheckLocked for InTable {
                 self.intable = true;
                 self.last_line_was_table_start = false;
             }
+        } else if (index == 0 || index == max_index) && c != '|' && self.was_in_table {
+            self.was_in_table = false;
         }
         if self.intable {
             ContinueState::True
@@ -224,7 +227,6 @@ pub fn check(initial: &str) -> Vec<Mistake> {
                     }
                     ContinueState::False => {
                         if in_possible_continue_state[check_i] {
-                            println!("fal");
                             mistakes.append(&mut possible_mistakes);
                             in_possible_continue_state[check_i] = false;
                         }
