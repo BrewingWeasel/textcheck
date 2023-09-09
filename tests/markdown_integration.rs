@@ -1,3 +1,5 @@
+use pretty_assertions::assert_eq;
+
 #[test]
 fn markdown_list() {
     assert_eq!(

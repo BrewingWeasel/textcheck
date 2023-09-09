@@ -1,3 +1,5 @@
+use pretty_assertions::assert_eq;
+
 #[test]
 fn single_line_double_space() {
     assert_eq!(
