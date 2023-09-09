@@ -85,9 +85,9 @@ impl CheckLocked for InCodeBlock {
         c: char,
         _index: usize,
         _max_index: usize,
-        shared: &Shared,
+        _shared: &Shared,
     ) -> ContinueState {
-        if c == '`' && shared.last_char == '`' && shared.char_before_last == '`' {
+        if c == '`' {
             self.inblock = !self.inblock;
         }
         ContinueState::from_bool(self.inblock)

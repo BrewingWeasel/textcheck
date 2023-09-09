@@ -57,6 +57,14 @@ fn markdown_list_indented_double_space() {
 }
 
 #[test]
+fn markdown_inline_codeblock() {
+    assert_eq!(
+        textcheck::check("Ooooh: `now    anything  should     be   ok `"),
+        Vec::new()
+    );
+}
+
+#[test]
 fn markdown_codeblock() {
     assert_eq!(
         textcheck::check(
