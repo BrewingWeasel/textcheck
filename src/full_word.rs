@@ -38,11 +38,11 @@ impl EachCharacter for WordCapitalization {
     ) -> Option<(usize, usize, &'a str)> {
         if c.is_ascii_whitespace() || max_index == index || c.is_ascii_punctuation() {
             if WORDS_TO_CAPITALIZE.contains(&self.word.as_str()) {
-                let start = index - self.word.len();
+                let start = index.saturating_sub(self.word.len());
                 self.word = String::new();
                 return Some((
                     start,
-                    index - 1,
+                    index.saturating_sub(1),
                     "Days of the week and months should be capitalized",
                 ));
             }

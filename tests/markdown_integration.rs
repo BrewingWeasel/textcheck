@@ -65,6 +65,82 @@ fn markdown_inline_codeblock() {
 }
 
 #[test]
+fn markdown_inline_codeblocks_multiple() {
+    assert_eq!(
+        textcheck::check(
+            "Ooooh: `now    anything  should     be   ok `
+ahh `yes  again`"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn markdown_inline_multiple_each_one_line() {
+    assert_eq!(
+        textcheck::check(
+            "`error  here`
+`error  here`
+`error  here`
+`error  here`
+`error  here`
+`error  here`"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn markdown_inline_multiple_each_one_line_text_after() {
+    assert_eq!(
+        textcheck::check(
+            "`error  here` lol
+`error  here` lol
+`error  here` lol
+`error  here` lol
+`error  here` lol
+`error  here` lol"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn markdown_inline_multiple_each_one_line_text_before() {
+    assert_eq!(
+        textcheck::check(
+            "`error  here`
+real `error  here`
+real `error  here`
+yes `error  here`"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn markdown_inline_codeblocks_multiple_after_single_backtick_end_of_line() {
+    assert_eq!(
+        textcheck::check(
+            "here is a backtick: `
+ahh `yes  again`"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
+fn markdown_inline_codeblocks_multiple_after_single_backtick() {
+    assert_eq!(
+        textcheck::check(
+            "here is a backtick: `aaaaa
+ahh `yes  again`"
+        ),
+        Vec::new()
+    );
+}
+
+#[test]
 fn markdown_codeblock() {
     assert_eq!(
         textcheck::check(

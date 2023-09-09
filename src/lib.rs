@@ -12,8 +12,11 @@ pub struct Mistake<'a> {
     pub name: &'a str,
 }
 
+#[derive(Debug)]
 struct InCodeBlock {
     inblock: bool,
+    inline_block: bool,
+    was_last: bool,
 }
 
 #[derive(Debug)]
@@ -83,18 +86,41 @@ impl CheckLocked for InCodeBlock {
     fn check<'a>(
         &mut self,
         c: char,
-        _index: usize,
+        index: usize,
         _max_index: usize,
-        _shared: &Shared,
+        shared: &Shared,
     ) -> ContinueState {
+        if self.was_last {
+            self.was_last = false;
+            if c != '`' {
+                self.inblock = !self.inblock;
+            }
+        }
         if c == '`' {
-            self.inblock = !self.inblock;
+            if shared.last_char != '`' || index == 0 {
+                self.inline_block = true;
+                self.was_last = true;
+            } else if shared.last_char == '`' && shared.char_before_last == '`' {
+                self.inline_block = false;
+                self.inblock = !self.inblock;
+            }
         }
         ContinueState::from_bool(self.inblock)
     }
 
+    fn update(&mut self) {
+        if self.inline_block {
+            self.was_last = false;
+            self.inblock = false;
+        }
+    }
+
     fn new() -> Self {
-        Self { inblock: false }
+        Self {
+            inblock: false,
+            inline_block: false,
+            was_last: false,
+        }
     }
 }
 
@@ -116,6 +142,7 @@ impl ContinueState {
 
 trait CheckLocked {
     fn check(&mut self, c: char, index: usize, max_index: usize, shared: &Shared) -> ContinueState;
+    fn update(&mut self) {}
     fn new() -> Self
     where
         Self: Sized;
@@ -251,6 +278,10 @@ pub fn check(initial: &str) -> Vec<Mistake> {
             }
             shared.update(ind, char);
         }
+        for lock_checker in &mut decide_to_run_checks {
+            lock_checker.update();
+        }
+
         for catch in &mut all_chars {
             catch.on_line_ending();
         }
