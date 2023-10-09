@@ -13,14 +13,14 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_name: mything
-            asset_name: mything-linux-amd64
+            artifact_name: textcheck
+            asset_name: textcheck-linux-amd64
           - os: windows-latest
-            artifact_name: mything.exe
-            asset_name: mything-windows-amd64
+            artifact_name: textcheck.exe
+            asset_name: textcheck-windows-amd64
           - os: macos-latest
-            artifact_name: mything
-            asset_name: mything-macos-amd64
+            artifact_name: textcheck
+            asset_name: textcheck-macos-amd64
 
     steps:
     - uses: actions/checkout@v3
